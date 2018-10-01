@@ -61,16 +61,17 @@ describe('CommitController', function() {
     const workdirPath2 = await cloneRepository('three-files');
     const repository2 = await buildRepository(workdirPath2);
 
+    const commitTemplate = await repository1.state.getCommitMessageFromTemplate();
     app = React.cloneElement(app, {repository: repository1});
     const wrapper = shallow(app, {disableLifecycleMethods: true});
 
-    assert.strictEqual(wrapper.instance().getCommitMessage(), '');
+    assert.strictEqual(wrapper.instance().getCommitMessage(), commitTemplate || '');
 
     wrapper.instance().setCommitMessage('message 1');
 
     wrapper.setProps({repository: repository2});
 
-    assert.strictEqual(wrapper.instance().getCommitMessage(), '');
+    assert.strictEqual(wrapper.instance().getCommitMessage(), commitTemplate || '');
 
     wrapper.setProps({repository: repository1});
     assert.equal(wrapper.instance().getCommitMessage(), 'message 1');
@@ -129,6 +130,7 @@ describe('CommitController', function() {
     });
 
     it('clears the commit messages', async function() {
+      const commitTemplate = await repository.state.getCommitMessageFromTemplate();
       repository.setCommitMessage('a message');
 
       await fs.writeFile(path.join(workdirPath, 'a.txt'), 'some changes', {encoding: 'utf8'});
@@ -137,7 +139,7 @@ describe('CommitController', function() {
       const wrapper = shallow(app, {disableLifecycleMethods: true});
       await wrapper.instance().commit('another message');
 
-      assert.strictEqual(repository.getCommitMessage(), '');
+      assert.strictEqual(repository.getCommitMessage(), commitTemplate || '');
     });
 
     it('sets the verbatim flag when committing from the mini editor', async function() {
@@ -155,7 +157,8 @@ describe('CommitController', function() {
     });
 
     it('issues a notification on failure', async function() {
-      repository.setCommitMessage('some message');
+      const commitMessage = await repository.state.getCommitMessageFromTemplate() || 'some message';
+      repository.setCommitMessage(commitMessage);
 
       sinon.spy(notificationManager, 'addError');
 
@@ -170,7 +173,7 @@ describe('CommitController', function() {
 
       assert.isTrue(notificationManager.addError.called);
 
-      assert.strictEqual(repository.getCommitMessage(), 'some message');
+      assert.strictEqual(repository.getCommitMessage(), commitMessage);
     });
 
     describe('message formatting', function() {
