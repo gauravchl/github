@@ -78,6 +78,7 @@ if (process.env.ATOM_GITHUB_BABEL_ENV === 'coverage' && !process.env.NYC_CONFIG)
 module.exports = createRunner({
   htmlTitle: `GitHub Package Tests - pid ${process.pid}`,
   reporter: process.env.MOCHA_REPORTER || 'list',
+  testSuffixes: ['stest.js'],
   overrideTestPaths: [/spec$/, /test/],
 }, (mocha, {terminate}) => {
   // Ensure that we expect to be deployable to this version of Atom.
